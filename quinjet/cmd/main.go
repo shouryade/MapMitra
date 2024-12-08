@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"quinjet/cmd/api"
+	"quinjet/cmd/worker"
 	"quinjet/configs"
 	"quinjet/db"
 
@@ -13,6 +15,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	cfg := mysql.Config{
 		User:                 configs.Envs.DBUser,
 		Passwd:               configs.Envs.DBPassword,
@@ -32,14 +35,20 @@ func main() {
 
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     configs.Envs.RedisAddress,
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Password: "",
+		DB:       0,
 	})
+
+	initRedis(redisClient, ctx)
+
+	worker := worker.NewWorker(redisClient)
+	go worker.StartCleanupWorker(5, 20)
 
 	server := api.NewAPIServer(fmt.Sprintf(":%s", configs.Envs.Port), db, redisClient)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}
+
 }
 
 func initStorage(db *sql.DB) {
@@ -49,4 +58,12 @@ func initStorage(db *sql.DB) {
 	}
 
 	log.Println("DB: Successfully connected!")
+}
+func initRedis(redisClient *redis.Client, ctx context.Context) {
+	_, err := redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Redis: Successfully connected!")
 }

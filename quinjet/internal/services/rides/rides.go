@@ -70,7 +70,7 @@ func (h *RidesHandler) handlePostRide(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Store request details in a hash
+	// Store request details in hashset for faster access by Leena's client -> user
 	requestKey := fmt.Sprintf("ride::request:%s", req.RequestID)
 	requestDetails := map[string]interface{}{
 		// "user_id":   "", // Placeholder, update as needed
@@ -79,14 +79,13 @@ func (h *RidesHandler) handlePostRide(w http.ResponseWriter, r *http.Request) {
 		"timestamp": timestamp,
 	}
 
-	// Set expiry of this request to 20 seconds
 	if err := h.redis.HSet(ctx, requestKey, requestDetails).Err(); err != nil {
 		log.Println("Failed to store ride details:", err)
 		http.Error(w, "Failed to store ride details", http.StatusInternalServerError)
 		return
 	}
-
-	if err := h.redis.Expire(ctx, requestKey, 60*time.Second).Err(); err != nil {
+	// Set expiry of this request to 20 seconds
+	if err := h.redis.Expire(ctx, requestKey, 20*time.Second).Err(); err != nil {
 		log.Println("Failed to set expiry for ride details:", err)
 		http.Error(w, "Failed to set expiry for ride details", http.StatusInternalServerError)
 		return
