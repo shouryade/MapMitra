@@ -5,6 +5,7 @@ import { depthLimitedBfs, findBlock } from "../utils/bfs";
 import axiosInstance from "../utils/axiosInstance";
 import L from "leaflet";
 import Routing from "./RoutingControl";
+import axios from "axios";
 
 
 const MapComponent = ({
@@ -28,6 +29,19 @@ const MapComponent = ({
 
   const autoIcon = new L.Icon({
     iconUrl: "/rickshaw.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+  const destIcon = new L.Icon({
+    iconUrl: "/destination.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+
+  const userLocIcon = new L.Icon({
+    iconUrl: "/userloc.png",
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -32],
@@ -60,8 +74,8 @@ const MapComponent = ({
   // for rendering nearby autos on the screen
   useEffect(() => {
     if (navType === "home") {
-      sendBlocks(1);
-      axiosInstance.get("/get").then((res) => {
+      // sendBlocks(1);
+      axios.get("https://httpbin.org/get").then((res) => {
         setAutos([
           [30.355021, 76.368732],
           [30.353112, 76.359944],
@@ -234,6 +248,7 @@ const fetchAutoID = async () => {
 
         if (distance <= 5) {
           console.log("Auto is within 5 meters of the user.");
+          setActiveAuto(autoLocation);
           break; // Exit loop if distance is within 5 meters
         }
 
@@ -241,7 +256,7 @@ const fetchAutoID = async () => {
         console.log(res.status);
 
         // Delay for 2 seconds before next polling
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       } catch (error) {
         console.error("Error fetching location:", error);
         break; // Exit if there's an error
@@ -264,7 +279,7 @@ const fetchAutoID = async () => {
         {/* Map Section */}
         <MapContainer
           center={userLocation} // Use dynamic location
-          zoom={30} // Adjust zoom level
+          zoom={150} // Adjust zoom level
           className="absolute top-0 left-0 w-full h-full z-0"
           dragging={!isDisabled}
           zoomControl={!isDisabled}
@@ -278,25 +293,27 @@ const fetchAutoID = async () => {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           {/* {geoJsonData && <GeoJSON data={geoJsonData} />} */}
-          <Marker position={userLocation} /> {/* Marker at user's location */}
-          {selectedLocation && <Marker position={selectedLocation} />}{" "}
+          <Marker position={userLocation} icon={userLocIcon} />{" "}
+          {/* Marker at user's location */}
+          {selectedLocation && (
+            <Marker position={selectedLocation} icon={destIcon} />
+          )}{" "}
           {/* Marker at autos */}
           {navType === "home" &&
-            autos.length !== 0 &&
+            autos &&
             autos.map((location, index) => (
               <Marker key={index} position={location} icon={autoIcon} />
             ))}
-            {navType === "hail" && activeAuto && (
-              <>
-                <Marker position={activeAuto} icon={autoIcon} />
-                {/* <Routing startLocation={userLocation} endLocation={activeAuto} /> */}
-              </>
-            )}
-
+          {navType === "hail" && activeAuto && (
+            <>
+              <Marker position={activeAuto} icon={autoIcon} />
+              {/* <Routing startLocation={userLocation} endLocation={activeAuto} /> */}
+            </>
+          )}
         </MapContainer>
 
         {navType === "hail" && isOverlayVisible && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 ">
             <button
               className="bg-white text-black px-6 py-3 rounded-full shadow-md text-lg font-semibold hover:bg-gray-200"
               onClick={() => {
@@ -309,33 +326,23 @@ const fetchAutoID = async () => {
           </div>
         )}
 
-        {/* ) && isRippleVisible && (
-               <div className="absolute inset-0 flex items-center justify-center z-20">
-                 <div className="relative">
-                   <div className="absolute bg-blue-500 opacity-75 w-16 h-16 rounded-full animate-ping"></div>
-                   <div className="absolute bg-blue-400 opacity-50 w-24 h-24 rounded-full animate-ping"></div>
-                   <div className="absolute bg-blue-300 opacity-25 w-32 h-32 rounded-full animate-ping"></div>
-                 </div>
-               </div> */}
         {navType === "hail" && !status && (
-          <div className="absolute bottom-10 w-full text-center z-30">
-            <div className="bg-white text-black px-4 py-2 rounded shadow-md inline-block">
+          <div className="absolute bottom-20 w-full text-center z-30">
+            <button
+              onClick={() => {
+                fetchAutoID();
+                setHailingStatus(true);
+                event.target.style.display = "none" ;
+              }}
+              className="bg-white text-black px-4 py-2 rounded shadow-md inline-block transition duration-300 ease-in-out hover:bg-gray-200 active:bg-gray-300"
+            >
               Sorry, couldn't request ride, try again?
-            </div>
+            </button>
           </div>
         )}
 
         {/* Search Input */}
         <div className="form-control fixed top-2 left-2 right-2 z-30">
-          {/* <input
-          type="text"
-          placeholder="Search"
-          className="input input-bordered text-center"
-          value={searchQuery}
-          onChange={handleSearchChange}
-          disabled={isDisabled}
-        /> */}
-
           <input
             type="text"
             placeholder="Search"

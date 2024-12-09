@@ -1,5 +1,6 @@
 import React from "react";
 import MapComponent from "../components/MapComponent";
+import { useState } from "react";
 import BottomNavigation from "../components/BottomNavigation";
 
 const User = () => {
@@ -11,15 +12,28 @@ const User = () => {
 
   return (
     <div>
-      {navType !== "recommendations" && (
+      {navType === "home" && (
         <MapComponent
+          user={"abc"}
           isDisabled={false}
-          autos={[]}
-          activeAuto={{}}
-          navType={navType}
+          autosLoc={null}
+          activeAutoLoc={null}
+          navType={"home"}
         />
       )}
-      {navType === "recommendations" && <Recommendations navType={navType} />}
+      {navType === "hail" && (
+        <MapComponent
+          user="abc"
+          isDisabled={false}
+          autosLoc={null}
+          activeAutoLoc={null}
+          navType="hail"
+        />
+      )}
+      {navType === "recommendations" && (
+        <div>Here are your recommendations!</div>
+      )}
+      {/* <BottomNavigation navType={navType} onNavChange={handleNavChange} /> */}
       <BottomNavigation navType={navType} onNavChange={handleNavChange} />
     </div>
   );

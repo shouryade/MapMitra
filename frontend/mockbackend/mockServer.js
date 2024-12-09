@@ -40,7 +40,7 @@ const autoLocations = {
 };
 
 // POST /api/rides
-app.post("/api/rides", (req, res) => {
+app.post("/api/new/rides", (req, res) => {
     
   const { requestID, level , pickup} = req.body;
   console.log(`Received ride request: ${requestID} for level: ${level}`);
@@ -48,7 +48,7 @@ app.post("/api/rides", (req, res) => {
 });
 
 // GET /api/ride/:requestID
-app.get("/api/rides", (req, res) => {
+app.get("/api/rides/status", (req, res) => {
     const { requestID } = req.query; 
 
   // Simulate ride assignment
