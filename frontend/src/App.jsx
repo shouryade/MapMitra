@@ -30,10 +30,11 @@ const App = () => {
         <Route path="/" element={<Home />} /> {/* Home component */}
         <Route path="/map" element={
         <MapComponent
+          user = {"abc"}
           isDisabled={false}
-          autosLoc={[]}
-          activeAutoLoc={{}}
-          navType={"home"}
+          autosLoc={null}
+          activeAutoLoc={null}
+          navType={"hail"}
         />
       } /> {/* MapComponent component */}
         

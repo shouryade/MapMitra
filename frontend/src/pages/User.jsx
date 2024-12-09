@@ -15,7 +15,7 @@ const User = () => {
         <MapComponent
           isDisabled={false}
           autos={[]}
-          activeAuto={[]}
+          activeAuto={{}}
           navType={navType}
         />
       )}
