@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -25,8 +26,10 @@ func NewRidesHandler(db *sql.DB, redis *redis.Client) http.Handler {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{requestID}", handler.handleGetRideStatus)
-	mux.Handle("POST /", http.HandlerFunc(handler.handlePostRide))
+	mux.Handle("POST /new", http.HandlerFunc(handler.handlePostRide))
+	mux.HandleFunc("GET /status/{requestID}", http.HandlerFunc(handler.handleGetRideStatus))
+	mux.HandleFunc("GET /available/{x}/{y}", http.HandlerFunc(handler.handleGetAvailableRides))
+
 	return mux
 }
 
@@ -85,11 +88,11 @@ func (h *RidesHandler) handlePostRide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Set expiry of this request to 20 seconds
-	if err := h.redis.Expire(ctx, requestKey, 20*time.Second).Err(); err != nil {
-		log.Println("Failed to set expiry for ride details:", err)
-		http.Error(w, "Failed to set expiry for ride details", http.StatusInternalServerError)
-		return
-	}
+	// if err := h.redis.Expire(ctx, requestKey, 20*time.Second).Err(); err != nil {
+	// 	log.Println("Failed to set expiry for ride details:", err)
+	// 	http.Error(w, "Failed to set expiry for ride details", http.StatusInternalServerError)
+	// 	return
+	// }
 
 	w.WriteHeader(http.StatusCreated)
 	response := map[string]string{
@@ -152,4 +155,67 @@ func (h *RidesHandler) handleGetRideStatus(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	response := fmt.Sprintf(`{"requestId":"%s","status":"%s"}`, requestID, status)
 	w.Write([]byte(response))
+}
+
+func (h *RidesHandler) handleGetAvailableRides(w http.ResponseWriter, r *http.Request) {
+	pathX := r.PathValue("x")
+	pathY := r.PathValue("y")
+
+	// Validate the path parameters
+	if pathX == "" || pathY == "" {
+		http.Error(w, "Missing required fields: x and y", http.StatusBadRequest)
+		return
+	}
+
+	// Convert path parameters to integers
+	x, err := strconv.Atoi(pathX)
+	if err != nil {
+		http.Error(w, "Invalid path parameter x", http.StatusBadRequest)
+		return
+	}
+
+	y, err := strconv.Atoi(pathY)
+	if err != nil {
+		http.Error(w, "Invalid path parameter y", http.StatusBadRequest)
+		return
+	}
+
+	// Get the available rides from the Redis cache
+	rides, err := h.getAvailableRides(x, y)
+	if err != nil {
+		http.Error(w, "Failed to get available rides: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Marshal the rides into JSON
+	data, err := json.Marshal(rides)
+	if err != nil {
+		http.Error(w, "Failed to marshal response: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Write the response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
+func (h *RidesHandler) getAvailableRides(x, y int) ([]string, error) {
+	// Get the key for the priority queue
+	ctx := context.Background()
+	key := fmt.Sprintf("grid::priority_queue:%d:%d", x, y)
+
+	// Fetch the rides from the priority queue sorted set
+	rides, err := h.redis.ZRangeByScore(ctx, key, &redis.ZRangeBy{
+		Min:    "-inf",
+		Max:    "+inf",
+		Offset: 0,
+		Count:  100,
+	}).Result()
+
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch rides from Redis: %v", err)
+	}
+
+	return rides, nil
 }
