@@ -127,7 +127,7 @@ MapMitra is an intuitive campus navigation and transportation management system 
 - **Yash Dogra** ([GitHub](https://github.com/yxshee))
 
 ## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## Acknowledgments
 We would like to express our gratitude to our mentors:
