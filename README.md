@@ -120,11 +120,11 @@ MapMitra is an intuitive campus navigation and transportation management system 
 3. **Plan your routes efficiently:** Minimize waiting times and navigate stress-free.
 
 ## Authors
-- **Ansh Midha** ([GitHub](https://github.com/AM0312))
-- **Leena Gupta**
-- **Madhur Gaba**
-- **Shourya De** ([GitHub](https://github.com/shouryade))
-- **Yash Dogra** ([GitHub](https://github.com/yxshee))
+- [Ansh Midha](https://github.com/AM0312)
+- [Leena Gupta](https://github.com/leena153)
+- [Madhur Gaba](https://github.com/madhurgaba2603)
+- [Shourya De](https://github.com/shouryade)
+- [Yash Dogra](https://github.com/yxshee)
 
 ## License
 This project is licensed under the MIT License.
