@@ -61,33 +61,3 @@ export const completeProfile = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, user, "Profile completed successfully."));
 });
-
-export const createNewRide = asyncHandler(async (req, res) => {
-  const { requestID, level, pickup } = req.body;
-  // console.log(requestID, level, pickup);
-  const response = await axios.post(
-    process.env.GO_MICROSERVICE_ENDPOINT + "/rides/new",
-    {
-      requestID,
-      level,
-      pickup,
-    }
-  );
-  res.status(response.status).json(response.data);
-});
-
-export const getRideStatus = asyncHandler(async (req, res) => {
-  const { requestID } = req.params;
-  const response = await axios.get(
-    process.env.GO_MICROSERVICE_ENDPOINT + `/status/${requestID}`
-  );
-  res.status(response.status).json(response.data);
-});
-
-export const getAutoAvailability = asyncHandler(async (req, res) => {
-  const { x, y } = req.body;
-  const response = await axios.get(
-    process.env.GO_MICROSERVICE_ENDPOINT + `/available/${x}/${y}`
-  );
-  res.status(response.status).json(response.data);
-});

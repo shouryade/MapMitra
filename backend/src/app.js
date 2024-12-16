@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pkg from "express-openid-connect";
+import axios from "axios";
+import asyncHandler from "./utils/asyncHandler.js";
 const { auth } = pkg;
 
 const app = express();
@@ -30,11 +32,11 @@ app.use(auth(config));
 
 // Routers
 import studentRouter from "./routes/student.routes.js";
-import axios from "axios";
-import asyncHandler from "./utils/asyncHandler.js";
+import rideRouter from "./routes/rides.routes.js";
 
 // Routes
 app.use("/api/student", studentRouter);
+app.use("/api/rides", rideRouter);
 
 app.get(
   "/api/service/health-check",
