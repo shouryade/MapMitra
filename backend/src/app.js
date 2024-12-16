@@ -1,11 +1,19 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import session from "express-session";
-import passport from "passport";
-import "./config/passportConfig.js";
+import pkg from "express-openid-connect";
+const { auth } = pkg;
 
 const app = express();
+
+const config = {
+  authRequired: false,
+  auth0Logout: true,
+  baseURL: process.env.BASE_URL,
+  clientID: process.env.AUTH_CLIENT_ID,
+  issuerBaseURL: process.env.AUTH_ISSUER_BASE_URL,
+  secret: process.env.AUTH_SECRET,
+};
 
 // Middlewares
 app.use(
@@ -18,24 +26,24 @@ app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(cookieParser());
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: process.env.NODE_ENV === "production" },
-  })
-);
-
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(auth(config));
 
 // Routers
-import authRouter from "./routes/auth.routes.js";
-import userRouter from "./routes/user.routes.js";
+import studentRouter from "./routes/student.routes.js";
+import axios from "axios";
+import asyncHandler from "./utils/asyncHandler.js";
 
 // Routes
-app.use("/api/auth", authRouter);
-app.use("/api/user", userRouter);
+app.use("/api/student", studentRouter);
+
+app.get(
+  "/api/service/health-check",
+  asyncHandler(async (req, res) => {
+    const response = await axios.get(
+      process.env.GO_MICROSERVICE_ENDPOINT + "/health/"
+    );
+    res.status(response.status).json(response.data);
+  })
+);
 
 export default app;
