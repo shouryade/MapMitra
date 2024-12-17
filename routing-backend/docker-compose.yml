@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  graphhopper:
+    image: israelhikingmap/graphhopper:10.0
+    container_name: graphhopper
+    ports:
+      - "8989:8989"
+    volumes:
+      - ./graphhopper/thapar_map.osm:/data/thapar_map.osm
+      - ./graphhopper/config.yml:/data/config.yml
+    command: >
+      --input /data/thapar_map.osm
+      --config /data/config.yml
+      --host 0.0.0.0
