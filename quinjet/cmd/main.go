@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"quinjet/cmd/api"
-	"quinjet/cmd/worker"
 	"quinjet/configs"
 	"quinjet/db"
 
@@ -41,8 +40,8 @@ func main() {
 
 	initRedis(redisClient, ctx)
 
-	worker := worker.NewWorker(redisClient)
-	go worker.StartCleanupWorker(5, 20)
+	// worker := worker.NewWorker(redisClient)
+	// go worker.StartCleanupWorker(5, 20)
 
 	server := api.NewAPIServer(fmt.Sprintf(":%s", configs.Envs.Port), db, redisClient)
 	if err := server.Run(); err != nil {

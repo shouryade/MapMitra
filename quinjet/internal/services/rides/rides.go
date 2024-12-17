@@ -34,7 +34,6 @@ func NewRidesHandler(db *sql.DB, redis *redis.Client) http.Handler {
 }
 
 // POST /rides
-// Request body: { "requestId": "some_id" }
 // Response: 201 Created
 func (h *RidesHandler) handlePostRide(w http.ResponseWriter, r *http.Request) {
 
@@ -160,7 +159,6 @@ func (h *RidesHandler) handleGetRideStatus(w http.ResponseWriter, r *http.Reques
 func (h *RidesHandler) handleGetAvailableRides(w http.ResponseWriter, r *http.Request) {
 	pathX := r.PathValue("x")
 	pathY := r.PathValue("y")
-
 	// Validate the path parameters
 	if pathX == "" || pathY == "" {
 		http.Error(w, "Missing required fields: x and y", http.StatusBadRequest)
