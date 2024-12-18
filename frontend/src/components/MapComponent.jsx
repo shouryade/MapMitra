@@ -26,6 +26,10 @@ const MapComponent = ({
   const [isRippleVisible, setIsRippleVisible] = useState(false);
   const [status, setHailingStatus] = useState(true);
   const [path, setPath] = useState([]);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [instructions, setInstructions] = useState([]);
+  const [currentInstruction, setCurrentInstruction] = useState(null);
+  const [instructionIndex, setInstructionIndex] = useState(0);
 
   const autoIcon = new L.Icon({
     iconUrl: "/rickshaw.png",
@@ -117,20 +121,13 @@ const MapComponent = ({
     if (!selectedLocation) return;
     console.log(userLocation);
     console.log(selectedLocation);
-    // setPath([userLocation, [selectedLocation.lat, selectedLocation.lon]]);
 
     const requestBody = {
-      points: [
-        [userLocation[1], userLocation[0]], // Start point: [longitude, latitude]
-        [selectedLocation.lon, selectedLocation.lat], // End point: [longitude, latitude]
+      start_coordinates: [userLocation[0], userLocation[1]],
+      // Start point: [longitude, latitude]
+      end_coordinates: [
+        selectedLocation.lat,selectedLocation.lon // End point: [longitude, latitude]
       ],
-      profile: "foot",
-      instructions: true,
-      locale: "en_US",
-      points_encoded: false,
-      points_encoded_multiplier: 1000000,
-      details: ["road_class", "road_environment", "max_speed", "average_speed"],
-      snap_preventions: ["ferry"],
     };
 
     // Set the headers
@@ -139,16 +136,26 @@ const MapComponent = ({
     };
 
     axios
-      .post("http://localhost:8989/route", requestBody, { headers })
+      .post(
+        "https://routing.shouryadoes.tech/route_instructions",
+        requestBody,
+        { headers }
+      )
       .then((response) => {
         if (response.status === 200) {
           console.log("Success");
           const routeData = response.data;
-          // console.log(routeData);
-          const route = routeData.paths[0].points.coordinates;
-          console.log(route);
-          const latLngs = route.map((point) => [point[1], point[0]]);
+          console.log(routeData);
+          const pathCoordinates = routeData.routePath;
+          const pathInstructions = routeData.routeInstructions;
+          console.log("route:", pathCoordinates);
+          const latLngs = pathCoordinates.map((point) => [point[1], point[0]]);
           setPath(latLngs);
+          setIsNavigating(true);
+          setInstructions(pathInstructions);
+          console.log("huehkejfh", instructions);
+          setCurrentInstruction(instructions[0]); 
+          setInstructionIndex(0);
         } else {
           console.error(`Error: Received status code ${response.status}`);
           console.error(response.data); // Log the error message from GraphHopper
@@ -181,6 +188,63 @@ const MapComponent = ({
       }
     );
   }, [path]);
+
+  useEffect(() => {
+    if (!instructions || instructions.length === 0) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const currentLocation = [latitude, longitude];
+
+        setUserLocation(currentLocation); // Update user's location
+
+        // Get the current instruction
+        if (currentInstruction) {
+          const distanceToNextPoint = calculateDistance(currentLocation, [
+            currentInstruction.coordinate.latitude,
+            currentInstruction.coordinate.longitude,
+          ]);
+
+          // If the user is within 10 meters of the next instruction point, update the instruction
+          if (distanceToNextPoint < 10) {
+            // Move to the next instruction if it's not the last one
+            if (instructionIndex < instructions.length - 1) {
+              setInstructionIndex((prevIndex) => prevIndex + 1);
+            }
+            setCurrentInstruction(instructions[instructionIndex]);
+          }
+        }
+      },
+      (error) => {
+        console.error("Error watching position:", error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 5000,
+      }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId); // Clean up the geolocation watch
+  }, [instructions, instructionIndex]);
+
+
+const handleStartNavigation = () => {
+  setIsNavigating(true);
+  // setCurrentInstruction(instructions[0]?.instruction || "Start navigating!");
+};
+
+const handleExitNavigation = () => {
+  setIsNavigating(false);
+  // setCurrentInstruction("");
+};
+
+const handleClearSearch = () => {
+  setSearchQuery("");
+  setSelectedLocation(null);
+};
+
 
   const fetchSuggestions = async (query) => {
     if (!query) {
@@ -268,7 +332,7 @@ const MapComponent = ({
 
       // Posting to the server
       try {
-        await axiosInstance.post("/api/rides/new", {
+        await axiosInstance.post("/api/v1/rides/new", {
           requestID: requestID,
           level: level,
           pickup: userLocation,
@@ -280,7 +344,7 @@ const MapComponent = ({
       // Polling for active auto
       while (!autoID) {
         try {
-          const res = await axiosInstance.get("/api/rides/status", {
+          const res = await axiosInstance.get("/api/v1/rides/status", {
             params: { requestID: requestID },
           });
 
@@ -314,7 +378,7 @@ const MapComponent = ({
       // Polling for auto location
       while (autoID) {
         try {
-          const res = await axiosInstance.get("/api/location", {
+          const res = await axiosInstance.get("/api/v1/location", {
             params: { autoID: autoID },
           });
 
@@ -370,14 +434,14 @@ const MapComponent = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          {path.length > 0 && (
+          {path.length > 0 && isNavigating && (
             <Polyline positions={path} color="blue" weight={5} />
           )}
           <Marker position={userLocation} icon={userLocIcon} />{" "}
           {/* Marker at user's location */}
-          {selectedLocation && (
-            <Marker position={selectedLocation} icon={destIcon} />
-          )}{" "}
+          {selectedLocation &&(
+              <Marker position={selectedLocation} icon={destIcon} />
+            )}{" "}
           {/* Marker at autos */}
           {navType === "home" &&
             autos &&
@@ -445,6 +509,40 @@ const MapComponent = ({
               ))}
             </div>
           )}
+        </div>
+        {/* Navigation Buttons */}
+        <div className="absolute bottom-20 left-4 right-4 z-50">
+          {!isNavigating ? (
+            <button
+              onClick={handleStartNavigation}
+              className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:bg-blue-600"
+            >
+              Start Navigation
+            </button>
+          ) : (
+            <div>
+              <button
+                onClick={handleExitNavigation}
+                className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:bg-red-600"
+              >
+                Exit Navigation
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="max-w-4xl mx-auto p-4 bg-white rounded-lg shadow-lg">
+          <h2 className="text-3xl font-bold text-center text-indigo-600 mb-4">
+            Navigation Instructions
+          </h2>
+          <div className="bg-indigo-50 p-6 rounded-lg shadow-md">
+            {currentInstruction ? (
+              <p className="text-xl text-gray-700">{currentInstruction.instruction}</p>
+            ) : (
+              <p className="text-lg text-gray-500">
+                Follow the path on the map.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </>
