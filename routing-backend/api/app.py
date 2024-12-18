@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 import requests
 import geopandas as gpd
 from shapely.geometry import Point
@@ -9,6 +10,13 @@ from os import getenv
 
 # Initialize FastAPI app
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 GRAPHHOPPER_BASE_URL = getenv("GRAPHHOPPER_BASE_URL", "http://localhost:8989/route")
 
