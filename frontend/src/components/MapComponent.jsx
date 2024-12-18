@@ -533,8 +533,8 @@ const handleClearSearch = () => {
         </div>
         {currentInstruction != null && (
           <>
-            <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded shadow-md z-50">
-              <p>{currentInstruction}</p>
+            <div className="relative top-20 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded shadow-md z-50">
+              <p>{currentInstruction.instruction}</p>
             </div>
           </>
         )}
