@@ -200,6 +200,7 @@ const MapComponent = ({
         setUserLocation(currentLocation); // Update user's location
 
         // Get the current instruction
+        console.log("hello123", currentInstruction);
         if (currentInstruction) {
           const distanceToNextPoint = calculateDistance(currentLocation, [
             currentInstruction.coordinate.latitude,
@@ -439,9 +440,9 @@ const handleClearSearch = () => {
           )}
           <Marker position={userLocation} icon={userLocIcon} />{" "}
           {/* Marker at user's location */}
-          {selectedLocation &&(
-              <Marker position={selectedLocation} icon={destIcon} />
-            )}{" "}
+          {selectedLocation && (
+            <Marker position={selectedLocation} icon={destIcon} />
+          )}{" "}
           {/* Marker at autos */}
           {navType === "home" &&
             autos &&
@@ -511,7 +512,7 @@ const handleClearSearch = () => {
           )}
         </div>
         {/* Navigation Buttons */}
-        <div className="absolute bottom-20 left-4 right-4 z-50">
+        <div className="absolute bottom-20 left-4 right-4">
           {!isNavigating ? (
             <button
               onClick={handleStartNavigation}
@@ -530,20 +531,13 @@ const handleClearSearch = () => {
             </div>
           )}
         </div>
-        <div className="max-w-4xl mx-auto p-4 bg-white rounded-lg shadow-lg">
-          <h2 className="text-3xl font-bold text-center text-indigo-600 mb-4">
-            Navigation Instructions
-          </h2>
-          <div className="bg-indigo-50 p-6 rounded-lg shadow-md">
-            {currentInstruction ? (
-              <p className="text-xl text-gray-700">{currentInstruction.instruction}</p>
-            ) : (
-              <p className="text-lg text-gray-500">
-                Follow the path on the map.
-              </p>
-            )}
-          </div>
-        </div>
+        {currentInstruction != null && (
+          <>
+            <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded shadow-md z-50">
+              <p>{currentInstruction}</p>
+            </div>
+          </>
+        )}
       </div>
     </>
   );
