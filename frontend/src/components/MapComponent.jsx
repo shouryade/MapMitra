@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, GeoJSON } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Polyline,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { depthLimitedBfs, findBlock } from "../utils/bfs";
 import axiosInstance from "../utils/axiosInstance";
 import L from "leaflet";
-import Routing from "./RoutingControl";
 import axios from "axios";
-
+import { useMap } from "react-leaflet";
 
 const MapComponent = ({
   user,
@@ -26,6 +30,7 @@ const MapComponent = ({
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   const [isRippleVisible, setIsRippleVisible] = useState(false);
   const [status, setHailingStatus] = useState(true);
+  const [path, setPath] = useState([]);
 
   const autoIcon = new L.Icon({
     iconUrl: "/rickshaw.png",
@@ -49,27 +54,36 @@ const MapComponent = ({
 
   // Fetch user's current location
   useEffect(() => {
+    let watcherId; // Store the watcher ID to clear it later
+
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+      // Use watchPosition to listen to real-time location updates
+      watcherId = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setUserLocation([latitude, longitude]);
-          // console.log(latitude, longitude);
-          // bounds
-          var bottomLeft = L.latLng([30.3501, 76.35831]);
-          var topRight = L.latLng([30.35875, 76.37416]);
+          setUserLocation([latitude, longitude]); // Update the location state
+
+          // Set map bounds once when location is obtained
+          const bottomLeft = L.latLng([30.3501, 76.35831]);
+          const topRight = L.latLng([30.35875, 76.37416]);
           setMaxBounds(L.latLngBounds(bottomLeft, topRight));
-          // console.log(bounds);
         },
         (error) => {
-          console.error("Error fetching location:", error);
-          alert("Could not fetch your location. Using default location.");
+          console.error("Error watching location:", error);
+          alert("Could not fetch your location.");
+        },
+        {
+          enableHighAccuracy: true, // Request high accuracy if necessary
+          maximumAge: 0, // Always fetch the latest location
+          timeout: 5000, // Timeout to avoid hanging
         }
       );
     } else {
       alert("Geolocation is not supported by your browser.");
     }
-  }, [userLocation]);
+     return () => {
+     };
+  }, []);
 
   // for rendering nearby autos on the screen
   useEffect(() => {
@@ -105,6 +119,76 @@ const MapComponent = ({
   //   }
   // }, []);
 
+  useEffect(() => {
+    if(!selectedLocation) return;
+    console.log(userLocation);
+    console.log(selectedLocation);
+    // setPath([userLocation, [selectedLocation.lat, selectedLocation.lon]]);
+
+    const requestBody = {
+      points: [
+        [userLocation[1], userLocation[0]], // Start point: [longitude, latitude]
+        [selectedLocation.lon, selectedLocation.lat], // End point: [longitude, latitude]
+      ],
+      profile: "foot",
+      instructions: true,
+      locale: "en_US",
+      points_encoded: false,
+      points_encoded_multiplier: 1000000,
+      details: ["road_class", "road_environment", "max_speed", "average_speed"],
+      snap_preventions: ["ferry"],
+    };
+
+    // Set the headers
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    axios
+      .post("http://localhost:8989/route", requestBody, { headers })
+      .then((response) => {
+        if (response.status === 200) {
+          console.log("Success");
+          const routeData = response.data;
+          // console.log(routeData);
+          const route = routeData.paths[0].points.coordinates;
+          console.log(route);
+          const latLngs = route.map((point) => [point[1], point[0]]);
+          setPath(latLngs);
+        } else {
+          console.error(`Error: Received status code ${response.status}`);
+          console.error(response.data); // Log the error message from GraphHopper
+        }
+      })
+      .catch((error) => {
+        console.error(`An error occurred: ${error.message}`);
+      });
+  }, [userLocation]);
+
+useEffect(() => {
+  if (!selectedLocation || path.length === 0) return;
+
+  // Continuously track the user's location and update polyline
+  const watchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      const currentLocation = [latitude, longitude];
+
+      setUserLocation(currentLocation); // Update user's location
+
+      const distanceToNextPoint = calculateDistance(currentLocation, path[0]);
+
+      if (distanceToNextPoint < 10) {
+        setPath((prevPath) => prevPath.slice(1)); 
+      }
+    },
+    (error) => {
+      console.error("Error watching position:", error);
+    }
+  );
+}, [path]); 
+
+
   const fetchSuggestions = async (query) => {
     if (!query) {
       setSuggestions([]);
@@ -125,13 +209,14 @@ const MapComponent = ({
   };
 
   const handleSuggestionClick = (location) => {
-    setSearchQuery(location.display_name); // Set search bar text to the selected location
+    setSearchQuery(location.display_name);
     setSelectedLocation({
       lat: parseFloat(location.lat),
       lon: parseFloat(location.lon),
     });
-    setSuggestions([]); // Clear suggestions after selection
-  };
+    setSuggestions([]);
+    // console.log(path);
+    };
 
   const handleKeyPress = async (e) => {
     if (e.key === "Enter") {
@@ -150,123 +235,123 @@ const MapComponent = ({
     if (lat && lon) map.setView([lat, lon], 13);
     return null;
   };
-function calculateDistance(coord1, coord2) {
-  const toRadians = (deg) => (deg * Math.PI) / 180;
 
-  const lat1 = coord1[0];
-  const lon1 = coord1[1];
-  const lat2 = coord2[0];
-  const lon2 = coord2[1];
+  function calculateDistance(coord1, coord2) {
+    const toRadians = (deg) => (deg * Math.PI) / 180;
 
-  const R = 6371000; // Radius of the Earth in meters
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
+    const lat1 = coord1[0];
+    const lon1 = coord1[1];
+    const lat2 = coord2[0];
+    const lon2 = coord2[1];
 
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const R = 6371000; // Radius of the Earth in meters
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
 
-  return R * c; // Distance in meters
-}
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(lat1)) *
+        Math.cos(toRadians(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-const fetchAutoID = async () => {
-  const ts = Date.now();
-  // const requestID = userID+"_"+ts; // Example requestID
-  const requestID = "user1"; // Example requestID
-  const { x, y } = findBlock(userLocation[0], userLocation[1]);
-  console.log(x, y);
-  const grids = depthLimitedBfs(x, y, 2);
+    return R * c; // Distance in meters
+  }
 
-  let autoID = null;
+  const fetchAutoID = async () => {
+    const ts = Date.now();
+    // const requestID = userID+"_"+ts; // Example requestID
+    const requestID = "user1"; // Example requestID
+    const { x, y } = findBlock(userLocation[0], userLocation[1]);
+    console.log(x, y);
+    const grids = depthLimitedBfs(x, y, 2);
 
-  for (const key in grids) {
-    const level = grids[key];
-    console.log("level", level);
+    let autoID = null;
 
-    // Posting to the server
-    try {
-      await axiosInstance.post("/api/rides/new", {
-        requestID: requestID,
-        level: level,
-        pickup: userLocation,
-      });
-    } catch (error) {
-      console.error("Error posting to /api/rides:", error);
-    }
+    for (const key in grids) {
+      const level = grids[key];
+      console.log("level", level);
 
-    // Polling for active auto
-    while (!autoID) {
+      // Posting to the server
       try {
-        const res = await axiosInstance.get("/api/rides/status", {
-          params: { requestID: requestID },
+        await axiosInstance.post("/api/rides/new", {
+          requestID: requestID,
+          level: level,
+          pickup: userLocation,
         });
-
-        console.log("get1", res.status);
-
-        if (res.status === 200) {
-          autoID = res.data;
-          console.log("autoID", autoID);
-        } else if (res.status === 404) {
-          console.log("No active auto found, status", res.status);
-        }
-
-        if (!autoID.autoID) {
-          // Wait 1 second before retrying
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
       } catch (error) {
-        console.error("Error fetching auto ID:", error);
-        break; // Exit the loop if there's an error
+        console.error("Error posting to /api/rides:", error);
+      }
+
+      // Polling for active auto
+      while (!autoID) {
+        try {
+          const res = await axiosInstance.get("/api/rides/status", {
+            params: { requestID: requestID },
+          });
+
+          console.log("get1", res.status);
+
+          if (res.status === 200) {
+            autoID = res.data;
+            console.log("autoID", autoID);
+          } else if (res.status === 404) {
+            console.log("No active auto found, status", res.status);
+          }
+
+          if (!autoID.autoID) {
+            // Wait 1 second before retrying
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+        } catch (error) {
+          console.error("Error fetching auto ID:", error);
+          break; // Exit the loop if there's an error
+        }
+      }
+
+      if (autoID) {
+        console.log("autoID2", autoID);
+        break; // Exit the loop once autoID is found
       }
     }
 
     if (autoID) {
-      console.log("autoID2", autoID);
-      break; // Exit the loop once autoID is found
-    }
-  }
+      console.log("autoID3", autoID);
+      // Polling for auto location
+      while (autoID) {
+        try {
+          const res = await axiosInstance.get("/api/location", {
+            params: { autoID: autoID },
+          });
 
-  if (autoID) {
-    console.log("autoID3", autoID);
-    // Polling for auto location
-    while (autoID) {
-      try {
-        const res = await axiosInstance.get("/api/location", {
-          params: { autoID: autoID },
-        });
+          const autoLocation = res.data; // Assuming res.data contains [latitude, longitude]
+          const distance = calculateDistance(userLocation, autoLocation);
 
-        const autoLocation = res.data; // Assuming res.data contains [latitude, longitude]
-        const distance = calculateDistance(userLocation, autoLocation);
+          console.log(
+            `Auto Location: ${autoLocation}, Distance: ${distance} meters`
+          );
 
-        console.log(
-          `Auto Location: ${autoLocation}, Distance: ${distance} meters`
-        );
+          if (distance <= 5) {
+            console.log("Auto is within 5 meters of the user.");
+            setActiveAuto(autoLocation);
+            break; // Exit loop if distance is within 5 meters
+          }
 
-        if (distance <= 5) {
-          console.log("Auto is within 5 meters of the user.");
           setActiveAuto(autoLocation);
-          break; // Exit loop if distance is within 5 meters
+          console.log(res.status);
+
+          // Delay for 2 seconds before next polling
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+        } catch (error) {
+          console.error("Error fetching location:", error);
+          break; // Exit if there's an error
         }
-
-        setActiveAuto(autoLocation);
-        console.log(res.status);
-
-        // Delay for 2 seconds before next polling
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      } catch (error) {
-        console.error("Error fetching location:", error);
-        break; // Exit if there's an error
       }
+    } else {
+      setHailingStatus(false);
     }
-  } else {
-    setHailingStatus(false);
-  }
-};
-
+  };
 
   return (
     <>
@@ -292,7 +377,10 @@ const fetchAutoID = async () => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          {/* {geoJsonData && <GeoJSON data={geoJsonData} />} */}
+         
+          {path.length > 0 && (
+            <Polyline positions={path} color="blue" weight={5} />
+          )}
           <Marker position={userLocation} icon={userLocIcon} />{" "}
           {/* Marker at user's location */}
           {selectedLocation && (
@@ -332,7 +420,7 @@ const fetchAutoID = async () => {
               onClick={() => {
                 fetchAutoID();
                 setHailingStatus(true);
-                event.target.style.display = "none" ;
+                event.target.style.display = "none";
               }}
               className="bg-white text-black px-4 py-2 rounded shadow-md inline-block transition duration-300 ease-in-out hover:bg-gray-200 active:bg-gray-300"
             >
