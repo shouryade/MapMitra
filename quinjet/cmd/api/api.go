@@ -7,6 +7,7 @@ import (
 	"quinjet/internal/services/rides"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/cors"
 )
 
 type APIServer struct {
@@ -31,10 +32,10 @@ func (s *APIServer) Run() error {
 
 	v1 := http.NewServeMux()
 	v1.Handle("/api/v1/", http.StripPrefix("/api/v1", router))
-
+	handler := cors.Default().Handler(v1)
 	server := http.Server{
 		Addr:    s.addr,
-		Handler: v1,
+		Handler: handler,
 	}
 	log.Println("Listening on", s.addr)
 	return server.ListenAndServe()
