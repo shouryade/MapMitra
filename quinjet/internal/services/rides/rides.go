@@ -2,7 +2,6 @@ package rides
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,13 +14,11 @@ import (
 )
 
 type RidesHandler struct {
-	db    *sql.DB
 	redis *redis.Client
 }
 
-func NewRidesHandler(db *sql.DB, redis *redis.Client) http.Handler {
+func NewRidesHandler(redis *redis.Client) http.Handler {
 	handler := &RidesHandler{
-		db:    db,
 		redis: redis,
 	}
 

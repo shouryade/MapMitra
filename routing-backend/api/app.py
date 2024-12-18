@@ -88,7 +88,6 @@ async def get_route_instructions(request: RouteRequest):
         "instructions": True,
         "locale": "en_US",
         "points_encoded": False,
-        "details": ["road_class", "road_environment", "max_speed", "average_speed"],
         "snap_preventions": ["ferry"],
     }
 

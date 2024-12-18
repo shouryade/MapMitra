@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"quinjet/internal/services/health"
@@ -12,14 +11,12 @@ import (
 
 type APIServer struct {
 	addr  string
-	db    *sql.DB
 	redis *redis.Client
 }
 
-func NewAPIServer(addr string, db *sql.DB, redis *redis.Client) *APIServer {
+func NewAPIServer(addr string, redis *redis.Client) *APIServer {
 	return &APIServer{
 		addr:  addr,
-		db:    db,
 		redis: redis,
 	}
 }
@@ -30,7 +27,7 @@ func (s *APIServer) Run() error {
 	// health
 	router.Handle("/health/", http.StripPrefix("/health", health.NewHealthHandler()))
 	// rides
-	router.Handle("/rides/", http.StripPrefix("/rides", rides.NewRidesHandler(s.db, s.redis)))
+	router.Handle("/rides/", http.StripPrefix("/rides", rides.NewRidesHandler(s.redis)))
 
 	v1 := http.NewServeMux()
 	v1.Handle("/api/v1/", http.StripPrefix("/api/v1", router))
