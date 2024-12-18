@@ -1,10 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Polyline,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { depthLimitedBfs, findBlock } from "../utils/bfs";
 import axiosInstance from "../utils/axiosInstance";
@@ -81,8 +76,7 @@ const MapComponent = ({
     } else {
       alert("Geolocation is not supported by your browser.");
     }
-     return () => {
-     };
+    return () => {};
   }, []);
 
   // for rendering nearby autos on the screen
@@ -120,7 +114,7 @@ const MapComponent = ({
   // }, []);
 
   useEffect(() => {
-    if(!selectedLocation) return;
+    if (!selectedLocation) return;
     console.log(userLocation);
     console.log(selectedLocation);
     // setPath([userLocation, [selectedLocation.lat, selectedLocation.lon]]);
@@ -165,29 +159,28 @@ const MapComponent = ({
       });
   }, [userLocation]);
 
-useEffect(() => {
-  if (!selectedLocation || path.length === 0) return;
+  useEffect(() => {
+    if (!selectedLocation || path.length === 0) return;
 
-  // Continuously track the user's location and update polyline
-  const watchId = navigator.geolocation.watchPosition(
-    (position) => {
-      const { latitude, longitude } = position.coords;
-      const currentLocation = [latitude, longitude];
+    // Continuously track the user's location and update polyline
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const currentLocation = [latitude, longitude];
 
-      setUserLocation(currentLocation); // Update user's location
+        setUserLocation(currentLocation); // Update user's location
 
-      const distanceToNextPoint = calculateDistance(currentLocation, path[0]);
+        const distanceToNextPoint = calculateDistance(currentLocation, path[0]);
 
-      if (distanceToNextPoint < 10) {
-        setPath((prevPath) => prevPath.slice(1)); 
+        if (distanceToNextPoint < 10) {
+          setPath((prevPath) => prevPath.slice(1));
+        }
+      },
+      (error) => {
+        console.error("Error watching position:", error);
       }
-    },
-    (error) => {
-      console.error("Error watching position:", error);
-    }
-  );
-}, [path]); 
-
+    );
+  }, [path]);
 
   const fetchSuggestions = async (query) => {
     if (!query) {
@@ -216,7 +209,7 @@ useEffect(() => {
     });
     setSuggestions([]);
     // console.log(path);
-    };
+  };
 
   const handleKeyPress = async (e) => {
     if (e.key === "Enter") {
@@ -377,7 +370,6 @@ useEffect(() => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-         
           {path.length > 0 && (
             <Polyline positions={path} color="blue" weight={5} />
           )}
