@@ -30,6 +30,7 @@ const MapComponent = ({
   const [instructions, setInstructions] = useState([]);
   const [currentInstruction, setCurrentInstruction] = useState(null);
   const [instructionIndex, setInstructionIndex] = useState(0);
+  const [gifLocation, setGifLocation] = useState(null);
 
   const autoIcon = new L.Icon({
     iconUrl: "/rickshaw.png",
@@ -49,6 +50,13 @@ const MapComponent = ({
     iconSize: [32, 32],
     iconAnchor: [16, 32],
     popupAnchor: [0, -32],
+  });
+
+  const gifIcon = L.divIcon({
+    className: "custom-gif-icon",
+    html: `<img src="/ripple2.gif" alt="Gif" style="width: 50px; height: 50px;"/>`, // Path to the GIF in the public folder
+    iconSize: [1000, 1000], // Size of the icon
+    iconAnchor: [25,25], // Anchor point of the icon
   });
 
   // Fetch user's current location
@@ -455,6 +463,9 @@ const handleClearSearch = () => {
               {/* <Routing startLocation={userLocation} endLocation={activeAuto} /> */}
             </>
           )}
+          {gifLocation && (
+            <Marker position={gifLocation} icon={gifIcon}></Marker>
+          )}
         </MapContainer>
 
         {navType === "hail" && isOverlayVisible && (
@@ -464,6 +475,7 @@ const handleClearSearch = () => {
               onClick={() => {
                 setIsOverlayVisible(false);
                 fetchAutoID();
+                setGifLocation(userLocation);
               }}
             >
               Tap to Start Looking for a Ride
@@ -471,7 +483,7 @@ const handleClearSearch = () => {
           </div>
         )}
 
-        {navType === "hail" && !status && (
+        {/* {navType === "hail" && !status && (
           <div className="absolute bottom-20 w-full text-center z-30">
             <button
               onClick={() => {
@@ -484,7 +496,7 @@ const handleClearSearch = () => {
               Sorry, couldn't request ride, try again?
             </button>
           </div>
-        )}
+        )} */}
 
         {/* Search Input */}
         <div className="form-control fixed top-2 left-2 right-2 z-30">
