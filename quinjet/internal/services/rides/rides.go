@@ -26,7 +26,8 @@ func NewRidesHandler(redis *redis.Client) http.Handler {
 	mux.Handle("POST /new", http.HandlerFunc(handler.handlePostRide))
 	mux.HandleFunc("GET /status/{requestID}", http.HandlerFunc(handler.handleGetRideStatus))
 	mux.HandleFunc("GET /available/{x}/{y}", http.HandlerFunc(handler.handleGetAvailableRides))
-
+	mux.HandleFunc("GET /accept/{requestID}", http.HandlerFunc(handler.handleAcceptAvailableRide))
+	mux.HandleFunc("GET /decline/{requestID}", http.HandlerFunc(handler.handleDeclineAvailableRide))
 	return mux
 }
 
@@ -69,6 +70,13 @@ func (h *RidesHandler) handlePostRide(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	encodedLevels, err := json.Marshal(req.Level)
+	if err != nil {
+		log.Println("Failed to encode level data:", err)
+		http.Error(w, "Failed to encode level data", http.StatusInternalServerError)
+		return
+	}
+
 	// Store request details in hashset for faster access by Leena's client -> user
 	requestKey := fmt.Sprintf("ride::request:%s", req.RequestID)
 	requestDetails := map[string]interface{}{
@@ -76,6 +84,7 @@ func (h *RidesHandler) handlePostRide(w http.ResponseWriter, r *http.Request) {
 		"pickup":    string(fmt.Sprintf("%f,%f", req.Location[0], req.Location[1])),
 		"status":    "pending",
 		"timestamp": timestamp,
+		"levels":    encodedLevels, // Store levels as a JSON string
 	}
 
 	if err := h.redis.HSet(ctx, requestKey, requestDetails).Err(); err != nil {
