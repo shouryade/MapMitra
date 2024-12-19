@@ -56,7 +56,7 @@ const MapComponent = ({
     className: "custom-gif-icon",
     html: `<img src="/ripple2.gif" alt="Gif" style="width: 50px; height: 50px;"/>`, // Path to the GIF in the public folder
     iconSize: [1000, 1000], // Size of the icon
-    iconAnchor: [25,25], // Anchor point of the icon
+    iconAnchor: [25, 25], // Anchor point of the icon
   });
 
   // Fetch user's current location
@@ -134,7 +134,8 @@ const MapComponent = ({
       start_coordinates: [userLocation[0], userLocation[1]],
       // Start point: [longitude, latitude]
       end_coordinates: [
-        selectedLocation.lat,selectedLocation.lon // End point: [longitude, latitude]
+        selectedLocation.lat,
+        selectedLocation.lon, // End point: [longitude, latitude]
       ],
     };
 
@@ -162,7 +163,7 @@ const MapComponent = ({
           setIsNavigating(true);
           setInstructions(pathInstructions);
           console.log("huehkejfh", instructions);
-          setCurrentInstruction(instructions[0]); 
+          setCurrentInstruction(instructions[0]);
           setInstructionIndex(0);
         } else {
           console.error(`Error: Received status code ${response.status}`);
@@ -238,22 +239,20 @@ const MapComponent = ({
     return () => navigator.geolocation.clearWatch(watchId); // Clean up the geolocation watch
   }, [instructions, instructionIndex]);
 
+  const handleStartNavigation = () => {
+    setIsNavigating(true);
+    // setCurrentInstruction(instructions[0]?.instruction || "Start navigating!");
+  };
 
-const handleStartNavigation = () => {
-  setIsNavigating(true);
-  // setCurrentInstruction(instructions[0]?.instruction || "Start navigating!");
-};
+  const handleExitNavigation = () => {
+    setIsNavigating(false);
+    // setCurrentInstruction("");
+  };
 
-const handleExitNavigation = () => {
-  setIsNavigating(false);
-  // setCurrentInstruction("");
-};
-
-const handleClearSearch = () => {
-  setSearchQuery("");
-  setSelectedLocation(null);
-};
-
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setSelectedLocation(null);
+  };
 
   const fetchSuggestions = async (query) => {
     if (!query) {
@@ -524,25 +523,27 @@ const handleClearSearch = () => {
           )}
         </div>
         {/* Navigation Buttons */}
-        <div className="absolute bottom-20 left-4 right-4">
-          {!isNavigating ? (
-            <button
-              onClick={handleStartNavigation}
-              className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:bg-blue-600"
-            >
-              Start Navigation
-            </button>
-          ) : (
-            <div>
+        {window.location.pathname === "/map" && (
+          <div className="absolute bottom-20 left-4 right-4">
+            {!isNavigating ? (
               <button
-                onClick={handleExitNavigation}
-                className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:bg-red-600"
+                onClick={handleStartNavigation}
+                className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:bg-blue-600"
               >
-                Exit Navigation
+                Start Navigation
               </button>
-            </div>
-          )}
-        </div>
+            ) : (
+              <div>
+                <button
+                  onClick={handleExitNavigation}
+                  className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-md shadow-md hover:bg-red-600"
+                >
+                  Exit Navigation
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         {currentInstruction != null && (
           <>
             {/* <div className="relative top-20 left-1/2 transform -translate-x-1/2 bg-white p-4 rounded shadow-md z-50">
