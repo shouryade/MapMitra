@@ -17,6 +17,18 @@ MapMitra is an intuitive campus navigation and transportation management system 
 - [Shourya De](https://github.com/shouryade)
 - [Yash Dogra](https://github.com/yxshee)
 
+## OpenStreetMap Contributions
+
+As part of our project, we made several updates to OpenStreetMap to improve the accuracy of the map data. Below are the details:
+
+### Changes Made
+- **Area:** [Map View](https://www.openstreetmap.org/#map=16/30.35418/76.36777&layers=N)
+- **Type of Edits:** Added new roads, updated building footprints, and corrected location details for existing points of interest.
+- **Purpose:** These changes enhance navigability and provide up-to-date information for the community
+
+### Changeset History
+You can view the changesets here: [Madhur Gaba's OSM Edits](https://www.openstreetmap.org/user/Madhur%20Gaba/history#map=16/30.35418/76.36777&layers=N).
+
 ## Technologies Used
 - **Frontend**: React.js (for a responsive and interactive user interface)
 - **Backend**: Golang, FastAPI (Python)
