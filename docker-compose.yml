@@ -11,6 +11,9 @@ services:
       --input /data/thapar_map.osm
       --config /data/config.yml
       --host 0.0.0.0
+    labels:
+      maintainer: "Madhur Gaba <madhur4gaba@gmail.com>"
+      description: "GraphHopper service with custom OpenStreetMap data based on edits by Madhur Gaba"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8989/health"]
       interval: 30s
@@ -18,6 +21,10 @@ services:
       retries: 3
       start_period: 5s
     restart: on-failure
+# Documentation
+# Custom OSM data: ./data/custom-map-data.osm.pbf
+# Madhur Gaba's OSM changes: https://www.openstreetmap.org/user/Madhur%20Gaba/history#map=16/30.35418/76.36777&layers=N
+# Area of interest: https://www.openstreetmap.org/#map=16/30.35418/76.36777&layers=N
 
   routing-backend:
       build:
