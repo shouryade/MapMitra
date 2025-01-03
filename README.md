@@ -12,15 +12,13 @@ MapMitra is an intuitive campus navigation and transportation management system 
 
 ## Technologies Used
 - **Frontend**: React.js (for a responsive and interactive user interface)
-- **Backend**: Node.js, Express.js
-- **Database**: MongoDB (for scalable and flexible data storage)
-- **Real-Time Communication**: Socket.io (for live e-rickshaw tracking)
-- **Mapping Services**: OpenStreetMap and GIS data
-- **Caching**: Redis (to optimize performance)
+- **Backend**: Golang, FastAPI (Python)
+- **Database**: MongoDB (for scalable and flexible data storage), Redis(for in-memory storage of rides)
+- **Mapping Services**: OpenStreetMap,GraphHopper and GIS data
 
 ## Installation
 ### Prerequisites
-- Node.js and npm installed
+- Golang, Python and pip installed
 - MongoDB server setup
 - Redis server installed
 
