@@ -10,6 +10,13 @@ MapMitra is an intuitive campus navigation and transportation management system 
 - **Interactive User Interface**: A visually appealing and intuitive interface for navigation and transportation.
 - **Admin Management Tools**: Allows administrators to manage routes, register drivers, and handle road closures.
 
+## Contributors
+- [Ansh Midha](https://github.com/AM0312)
+- [Leena Gupta](https://github.com/leena153)
+- [Madhur Gaba](https://github.com/Gaba2603)
+- [Shourya De](https://github.com/shouryade)
+- [Yash Dogra](https://github.com/yxshee)
+
 ## Technologies Used
 - **Frontend**: React.js (for a responsive and interactive user interface)
 - **Backend**: Golang, FastAPI (Python)
@@ -116,13 +123,6 @@ MapMitra is an intuitive campus navigation and transportation management system 
 1. **Navigate through the campus:** Use the interactive map to get directions based on landmarks.
 2. **Track e-rickshaws in real-time:** View live locations and availability of campus e-rickshaws.
 3. **Plan your routes efficiently:** Minimize waiting times and navigate stress-free.
-
-## Authors
-- [Ansh Midha](https://github.com/AM0312)
-- [Leena Gupta](https://github.com/leena153)
-- [Madhur Gaba](https://github.com/madhurgaba2603)
-- [Shourya De](https://github.com/shouryade)
-- [Yash Dogra](https://github.com/yxshee)
 
 ## License
 This project is licensed under the MIT License.
