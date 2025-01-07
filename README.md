@@ -136,8 +136,7 @@ You can view the changesets here: [Madhur Gaba's OSM Edits](https://www.openstre
 2. **Track e-rickshaws in real-time:** View live locations and availability of campus e-rickshaws.
 3. **Plan your routes efficiently:** Minimize waiting times and navigate stress-free.
 
-## License
-This project is licensed under the MIT License.
+Please contact Shourya De (shourya.de12@gmail.com) if you are planning to use MapMitra in any way (commercial, non-commercial, personal/hobby uses)
 
 ## Acknowledgments
 We would like to express our gratitude to our mentors:
